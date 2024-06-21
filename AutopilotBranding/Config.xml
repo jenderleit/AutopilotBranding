@@ -39,19 +39,20 @@
     <!-- If you want .NET 3.5, uncomment this one.
     <Feature>NetFX3~~~~</Feature>
     -->
+    <Feature>NetFX3~~~~</Feature>
     <Feature>WMIC</Feature>
   </AddFeatures>
   <Language></Language>
   <!-- If you want to set a language, customize and reference this file: <Language>Language.xml</Language> -->
   <DefaultApps>Associations.xml</DefaultApps>
-  <RegisteredOwner>Autopilot User</RegisteredOwner>
-  <RegisteredOrganization>Contoso</RegisteredOrganization>
+  <RegisteredOwner>webuildit</RegisteredOwner>
+  <RegisteredOrganization>Webuildit Danmark ApS</RegisteredOrganization>
   <OEMInfo>
-    <Manufacturer>Contoso</Manufacturer>
+    <Manufacturer>webuildit</Manufacturer>
     <Model>PC</Model>
-    <Logo>Contoso.bmp</Logo>
-    <SupportPhone>+1 800-555-1212</SupportPhone>
-    <SupportHours>8am-5pm PST</SupportHours>
-    <SupportURL>http://www.contoso.com</SupportURL>
+    <Logo>wbit.bmp</Logo>
+    <SupportPhone>+45 32 26 72 50</SupportPhone>
+    <SupportHours>24/7</SupportHours>
+    <SupportURL>http://www.webuildit.dk</SupportURL>
   </OEMInfo>
 </Config>

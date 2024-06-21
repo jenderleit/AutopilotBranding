@@ -49,13 +49,13 @@ if ($ci.OsBuildNumber -le 22000) {
 # STEP 2: Configure background
 reg.exe load HKLM\TempUser "C:\Users\Default\NTUSER.DAT" | Out-Host
 
-Log "Setting up Autopilot theme"
+Log "Setting up Webuildit theme"
 Mkdir "C:\Windows\Resources\OEM Themes" -Force | Out-Null
-Copy-Item "$installFolder\Autopilot.theme" "C:\Windows\Resources\OEM Themes\Autopilot.theme" -Force
-Mkdir "C:\Windows\web\wallpaper\Autopilot" -Force | Out-Null
-Copy-Item "$installFolder\Autopilot.jpg" "C:\Windows\web\wallpaper\Autopilot\Autopilot.jpg" -Force
-Log "Setting Autopilot theme as the new user default"
-reg.exe add "HKLM\TempUser\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes" /v InstallTheme /t REG_EXPAND_SZ /d "%SystemRoot%\resources\OEM Themes\Autopilot.theme" /f | Out-Host
+Copy-Item "$installFolder\Webuildit.theme" "C:\Windows\Resources\OEM Themes\Webuildit.theme" -Force
+Mkdir "C:\Windows\web\wallpaper\Webuildit" -Force | Out-Null
+Copy-Item "$installFolder\wbit.jpg" "C:\Windows\web\wallpaper\Webuildit\wbit.jpg" -Force
+Log "Setting Webuildit theme as the new user default"
+reg.exe add "HKLM\TempUser\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes" /v InstallTheme /t REG_EXPAND_SZ /d "%SystemRoot%\resources\OEM Themes\Webuildit.theme" /f | Out-Host
 
 # STEP 2A: Stop Start menu from opening on first logon
 reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v StartShownOnUpgrade /t REG_DWORD /d 1 /f | Out-Host
@@ -63,7 +63,22 @@ reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Ad
 # STEP 2B: Hide "Learn more about this picture" from the desktop
 reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" /v "{2cc5ca98-6485-489a-920e-b3e88a6ccce3}" /t REG_DWORD /d 1 /f | Out-Host
 
+# STEP 2C: Restore Windows 11 rightclick context menu
+reg.exe add "HKLM\TempUser\SOFTWARE\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f | Out-Host
+reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTaskbarMode /t REG_DWORD /d 1 /f | Out-Host 
 reg.exe unload HKLM\TempUser | Out-Host
+
+# STEP 2D: Set Logon Screen Background
+Log "Setting up Webuildit lockscreen"
+Mkdir "C:\Windows\web\lockscreen\Webuildit" -Force | Out-Null
+Copy-Item "$installFolder\wbit.jpg" "C:\Windows\web\lockscreen\Webuildit\wbit.jpg" -Force
+Log "Setting up Webuildit lockscreen as the new user default"
+reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" /v LockScreenImageStatus /t REG_DWORD /d 1 /f | Out-Host
+reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" /v LockScreenImagePath /t REG_SZ /d "C:\Windows\web\lockscreen\Webuildit\wbit.jpg" /f | Out-Host
+reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" /v LockScreenImageUrl /t REG_SZ /d "C:\Windows\web\lockscreen\Webuildit\wbit.jpg" /f | Out-Host
+
+# STEP 2E: Disable Windows 11 Teams Chat
+reg.exe add "HKLM\Software\Policies\Microsoft\Windows\Windows Chat" /v ChatIcon /t REG_DWORD /d 3 /f | Out-Host
 
 # STEP 3: Set time zone (if specified)
 if ($config.Config.TimeZone) {
@@ -77,18 +92,18 @@ else {
 	Start-Service -Name "lfsvc" -ErrorAction SilentlyContinue
 }
 
-# STEP 4: Remove specified provisioned apps if they exist
-Log "Removing specified in-box provisioned apps"
-$apps = Get-AppxProvisionedPackage -online
-$config.Config.RemoveApps.App | % {
-	$current = $_
-	$apps | ? {$_.DisplayName -eq $current} | % {
-		try {
-			Log "Removing provisioned app: $current"
-			$_ | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null
-		} catch { }
-	}
-}
+# STEP 4: Remove specified provisioned apps if they exist - MOved to RemoveBloatware.ps1
+#Log "Removing specified in-box provisioned apps"
+#$apps = Get-AppxProvisionedPackage -online
+#$config.Config.RemoveApps.App | % {
+#	$current = $_
+#	$apps | ? {$_.DisplayName -eq $current} | % {
+#		try {
+#			Log "Removing provisioned app: $current"
+#			$_ | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null
+#		} catch { }
+#	}
+#}
 
 # STEP 5: Install OneDrive per machine
 if ($config.Config.OneDriveSetup) {
@@ -107,7 +122,7 @@ Log "Turning off (old) Edge desktop shortcut"
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v DisableEdgeDesktopShortcutCreation /t REG_DWORD /d 1 /f /reg:64 | Out-Host
 
 # STEP 7: Add language packs
-Get-ChildItem "$($installFolder)LPs" -Filter *.cab | % {
+Get-ChildItem "$($installFolder)LPs" -Filter *.cab | ForEach-Object {
 	Log "Adding language pack: $($_.FullName)"
 	Add-WindowsPackage -Online -NoRestart -PackagePath $_.FullName
 }
@@ -128,7 +143,7 @@ if ($currentWU -eq 1)
 }
 if ($config.Config.AddFeatures.Feature.Count -gt 0)
 {
-	$config.Config.AddFeatures.Feature | % {
+	$config.Config.AddFeatures.Feature | ForEach-Object {
 		Log "Adding Windows feature: $_"
 		Add-WindowsCapability -Online -Name $_ -ErrorAction SilentlyContinue | Out-Null
 	}
@@ -169,7 +184,7 @@ if ($config.Config.OEMInfo)
 Log "Enabling UE-V"
 Enable-UEV
 Set-UevConfiguration -Computer -SettingsStoragePath "%OneDriveCommercial%\UEV" -SyncMethod External -DisableWaitForSyncOnLogon
-Get-ChildItem "$($installFolder)UEV" -Filter *.xml | % {
+Get-ChildItem "$($installFolder)UEV" -Filter *.xml | ForEach-Object {
 	Log "Registering template: $($_.FullName)"
 	Register-UevTemplate -Path $_.FullName
 }
