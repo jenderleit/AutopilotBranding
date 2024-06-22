@@ -63,6 +63,10 @@ reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Themes\Pers
 # STEP 2B: Hide "Learn more about this picture" from the desktop
 reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" /v "{2cc5ca98-6485-489a-920e-b3e88a6ccce3}" /t REG_DWORD /d 1 /f | Out-Host
 
+# STEP 2D: Restore Windows 11 rightclick context menu
+Log "Restoring Windows rightclick menu"
+reg.exe add "HKLM\TempUser\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f | Out-Host
+reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTaskbarMode /t REG_DWORD /d 1 /f | Out-Host 
 
 reg.exe unload HKLM\TempUser | Out-Host
 
@@ -75,10 +79,6 @@ reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" 
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" /v LockScreenImagePath /t REG_SZ /d "C:\Windows\web\lockscreen\Webuildit\wbit.jpg" /f | Out-Host
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" /v LockScreenImageUrl /t REG_SZ /d "C:\Windows\web\lockscreen\Webuildit\wbit.jpg" /f | Out-Host
 
-# STEP 2D: Restore Windows 11 rightclick context menu
-Log "Restoring Windows rightclick menu"
-reg.exe add "HKLM\SOFTWARE\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f | Out-Host
-reg.exe add "HKLM\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTaskbarMode /t REG_DWORD /d 1 /f | Out-Host 
 
 # STEP 2E: Disable Windows 11 Teams Chat
 Log "Disabling Windows 11 Teams Chat"
