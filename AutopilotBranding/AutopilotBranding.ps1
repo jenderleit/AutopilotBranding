@@ -16,7 +16,7 @@ if ("$env:PROCESSOR_ARCHITEW6432" -ne "ARM64")
     {
         & "$($env:WINDIR)\SysNative\WindowsPowerShell\v1.0\powershell.exe" -ExecutionPolicy bypass -NoProfile -File "$PSCommandPath"
         Exit $lastexitcode
-    }
+    }about:blank#blocked
 }
 
 # Create a tag file just so Intune knows this was installed
@@ -34,7 +34,6 @@ $installFolder = "$PSScriptRoot\"
 Log "Install folder: $installFolder"
 Log "Loading configuration: $($installFolder)Config.xml"
 [Xml]$config = Get-Content "$($installFolder)Config.xml"
-
 # STEP 1: Apply custom start menu layout
 $ci = Get-ComputerInfo
 if ($ci.OsBuildNumber -le 22000) {
@@ -59,16 +58,15 @@ reg.exe add "HKLM\TempUser\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes" /v 
 
 # STEP 2A: Stop Start menu from opening on first logon
 reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v StartShownOnUpgrade /t REG_DWORD /d 1 /f | Out-Host
+reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme /t REG_DWORD /d 0 /f | Out-Host
 
 # STEP 2B: Hide "Learn more about this picture" from the desktop
 reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" /v "{2cc5ca98-6485-489a-920e-b3e88a6ccce3}" /t REG_DWORD /d 1 /f | Out-Host
 
-# STEP 2C: Restore Windows 11 rightclick context menu
-reg.exe add "HKLM\TempUser\SOFTWARE\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f | Out-Host
-reg.exe add "HKLM\TempUser\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTaskbarMode /t REG_DWORD /d 1 /f | Out-Host 
+
 reg.exe unload HKLM\TempUser | Out-Host
 
-# STEP 2D: Set Logon Screen Background
+# STEP 2C: Set Logon Screen Background
 Log "Setting up Webuildit lockscreen"
 Mkdir "C:\Windows\web\lockscreen\Webuildit" -Force | Out-Null
 Copy-Item "$installFolder\wbit.jpg" "C:\Windows\web\lockscreen\Webuildit\wbit.jpg" -Force
@@ -77,7 +75,13 @@ reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" 
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" /v LockScreenImagePath /t REG_SZ /d "C:\Windows\web\lockscreen\Webuildit\wbit.jpg" /f | Out-Host
 reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" /v LockScreenImageUrl /t REG_SZ /d "C:\Windows\web\lockscreen\Webuildit\wbit.jpg" /f | Out-Host
 
+# STEP 2D: Restore Windows 11 rightclick context menu
+Log "Restoring Windows rightclick menu"
+reg.exe add "HKLM\SOFTWARE\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f | Out-Host
+reg.exe add "HKLM\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTaskbarMode /t REG_DWORD /d 1 /f | Out-Host 
+
 # STEP 2E: Disable Windows 11 Teams Chat
+Log "Disabling Windows 11 Teams Chat"
 reg.exe add "HKLM\Software\Policies\Microsoft\Windows\Windows Chat" /v ChatIcon /t REG_DWORD /d 3 /f | Out-Host
 
 # STEP 3: Set time zone (if specified)
